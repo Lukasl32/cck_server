@@ -17,7 +17,14 @@ public class AuthorizationMiddleware
     {
         try
         {
-            await _request(context);
+            try
+            {
+                await _request(context);
+            }
+            catch (AuthorizationException)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            }
         }
         catch (InvalidTokenException)
         {

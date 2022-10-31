@@ -12,7 +12,7 @@ public class User
 
     public string? Password { get; set; }
 
-    public bool? Administration { get; set; }
+    public bool? Administrator { get; set; }
     public string? Signature { get; set; }
 
     public DateTime LastLogin { get; set; }

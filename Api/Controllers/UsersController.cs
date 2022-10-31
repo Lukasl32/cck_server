@@ -1,12 +1,6 @@
-﻿using System.IO;
-using System.Net.Mail;
-
-using Accessories.Enums;
-using Accessories.Exceptions;
-using Accessories.Models;
+﻿using Accessories.Models;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 using MySqlConnector;
 
@@ -19,15 +13,17 @@ namespace Api.Controllers
     public class UsersController : ControllerBase
     {
         // GET: api/<UsersController>
-        [HttpGet()]
-        public async Task<List<User>> Get()
+        [HttpGet("/referee")]
+        public async Task<List<User>> GetReferee()
         {
+            Security.Authorize(HttpContext);
+
             //var filters = Convert.ToString(HttpContext.Request.Form.FirstOrDefault(x => x.Key == "filters").Value);
             var users = new List<User>();
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `firstName`, `lastName`, `email`, `phoneNumber`, `administration`, `signature`, `lastLogin`, `registered` FROM `user`;";
+            string sql = $"SELECT `id`, `firstName`, `lastName`, `email`, `phoneNumber`, `administrator`, `signature`, `lastLogin`, `registered` FROM `user`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -40,7 +36,7 @@ namespace Api.Controllers
                     Email = reader.GetString(3),
                     PhoneNumber = reader.GetString(4),
 
-                    Administration = reader.GetBoolean(5),
+                    Administrator = reader.GetBoolean(5),
                     Signature = reader.GetString(6),
 
                     LastLogin = reader.GetDateTime(7),
@@ -51,12 +47,14 @@ namespace Api.Controllers
         }
 
         // GET api/<UsersController>/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        [HttpGet("/referee/{id}")]
+        public async Task<IActionResult> GetReferee(int id)
         {
+            Security.Authorize(HttpContext);
+
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `firstName`, `lastName`, `email`, `phoneNumber`, `administration`, `signature`, `lastLogin`, `registered` FROM `user`;";
+            string sql = $"SELECT `id`, `firstName`, `lastName`, `email`, `phoneNumber`, `administrator`, `signature`, `lastLogin`, `registered` FROM `user` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
@@ -69,7 +67,7 @@ namespace Api.Controllers
                     Email = reader.GetString(3),
                     PhoneNumber = reader.GetString(4),
 
-                    Administration = reader.GetBoolean(5),
+                    Administrator = reader.GetBoolean(5),
                     Signature = reader.GetString(6),
 
                     LastLogin = reader.GetDateTime(7),
@@ -81,10 +79,13 @@ namespace Api.Controllers
         }
 
         // PUT api/<UsersController>/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id)
+        [HttpPut("/referee/{id}")]
+        public async Task<IActionResult> PutReferee(int id)
         {
+            Security.Authorize(HttpContext);
+
             var body = HttpContext.Request.Form;
+            
             User newUser = new()
             {
                 Id = id,
@@ -99,7 +100,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT * FROM `user` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `user` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -122,9 +123,11 @@ namespace Api.Controllers
         }
 
         // DELETE api/<UsersController>/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete("/referee/{id}")]
+        public async Task<IActionResult> DeleteReferee(int id)
         {
+            Security.Authorize(HttpContext);
+
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
             string sql;
@@ -145,6 +148,138 @@ namespace Api.Controllers
             }
 
             sql = $"DELETE FROM `user` WHERE id={id};";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                await command.ExecuteReaderAsync();
+                return Ok();
+            }
+        }
+
+        [HttpGet("/leader")]
+        public async Task<List<UserTeamLeader>> GetLeader()
+        {
+            Security.Authorize(HttpContext);
+
+            var users = new List<UserTeamLeader>();
+
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+            string sql = $"SELECT `id`, `firstName`, `lastName`, `phoneNumber`, `signature` FROM `users_leader`;";
+            using MySqlCommand command = new(sql, connection);
+            using MySqlDataReader reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                users.Add(new UserTeamLeader
+                {
+                    Id = reader.GetInt64(0),
+                    FirstName = reader.GetString(1),
+                    LastName = reader.GetString(2),
+                    PhoneNumber = reader.GetString(3),
+                    Signature = reader.GetString(4),
+                });
+            }
+            return users;
+        }
+
+        [HttpPost("/leader")]
+        public async Task<IActionResult> PostLeader()
+        {
+
+        }
+
+        [HttpGet("/leader/{id}")]
+        public async Task<IActionResult> GetLeader(int id)
+        {
+            Security.Authorize(HttpContext);
+
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+            string sql = $"SELECT `id`, `firstName`, `lastName`, `phoneNumber`, `signature` FROM `users_leader` WHERE id={id};";
+            using MySqlCommand command = new(sql, connection);
+            using MySqlDataReader reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return Ok(new UserTeamLeader
+                {
+                    Id = reader.GetInt64(0),
+                    FirstName = reader.GetString(1),
+                    LastName = reader.GetString(2),
+                    PhoneNumber = reader.GetString(3),
+                    Signature = reader.GetString(4),
+                });
+            }
+            else
+                return NotFound();
+        }
+
+        [HttpPut("/leader/{id}")]
+        public async Task<IActionResult> PutLeader(int id)
+        {
+            Security.Authorize(HttpContext);
+
+            var body = HttpContext.Request.Form;
+
+            UserTeamLeader newUser = new()
+            {
+                Id = id,
+                FirstName = body["firstName"],
+                LastName = body["lastName"],
+                PhoneNumber = body["phoneNumber"],
+                Signature = body["signature"]
+            };
+
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+            string sql;
+
+            //kontrola že uživatel s ID je PRÁVĚ jeden
+            sql = $"SELECT COUNT(*) FROM `users_leader` WHERE id={id}";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+                if (count == 0)
+                {
+                    return NotFound();
+                }
+                else if (count > 1)
+                {
+                    return Conflict();
+                }
+            }
+
+            sql = $"UPDATE `users_leader` SET `firstName`='{newUser.FirstName}',`lastName`='{newUser.LastName}', `phoneNumber`='{newUser.PhoneNumber}', `signature`='{newUser.Signature}' WHERE id={id}";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                await command.ExecuteNonQueryAsync();
+                return Ok();
+            }
+        }
+
+        [HttpDelete("/leader/{id}")]
+        public async Task<IActionResult> DeleteLeader(int id)
+        {
+            Security.Authorize(HttpContext);
+
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+            string sql;
+
+            //kontrola že uživatel s ID je PRÁVĚ jeden
+            sql = $"SELECT * FROM `users_leader` WHERE id={id}";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+                if (count == 0)
+                {
+                    return NotFound();
+                }
+                else if (count > 1)
+                {
+                    return Conflict();
+                }
+            }
+
+            sql = $"DELETE FROM `users_leader` WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteReaderAsync();

@@ -1,0 +1,36 @@
+﻿GET	/users
+- vrátí výčet všech rozhodčích
+
+request
+	headers
+		token
+	body
+
+GET /users/{id}
+- vrátí detail uživatele
+
+request
+	headers
+		token
+	body
+
+PUT /user/{id}
+- aktualizuje uživatele
+- vyžaduje všechny informace o uživately (neupravené informace == staré informace)
+
+request
+	headers
+		token
+	body
+		fisrtName
+		lastName
+		email
+		phoneNumber
+
+DELETE /user/{id}
+- odstraní uživatele
+
+request
+	headers
+		token
+	body
