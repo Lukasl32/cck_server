@@ -1,0 +1,29 @@
+﻿[HttpGet]
+public async Task<List<object>> Get()
+{
+
+}
+
+[HttpGet("{id}")]
+public async Task<IActionResult> Get(int id)
+{
+
+}
+
+[HttpPost]
+public async Task<IActionResult> Post()
+{
+
+}
+
+[HttpPut("{id}")]
+public async Task<IActionResult> Put(int id)
+{
+
+}
+
+[HttpDelete("{id}")]
+public async Task<IActionResult> Delete(int id)
+{
+
+}

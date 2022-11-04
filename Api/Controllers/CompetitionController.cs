@@ -1,47 +1,44 @@
-﻿using System.Data.Common;
+﻿using System.Data;
+using System.Data.Common;
 
 using Accessories;
+using Accessories.Enums;
 using Accessories.Models;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Dependency;
 
 using MySqlConnector;
 
-
 namespace Api.Controllers
 {
-    [Route("api/teams")]
+    [Route("api/comtetitions")]
     [ApiController]
-    public class TeamController : ControllerBase
+    public class CompetitionController : ControllerBase
     {
         [HttpGet]
-        public async Task<List<Team>> Get()
+        public async Task<List<Competition>> Get()
         {
             Security.Authorize(HttpContext);
 
-            var teams = new List<Team>();
+            var competitions = new List<Competition>();
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `title`, `number`, `organization`, `leader_id`, `escort_id`, `memberCount`, `points`, `competetion_id` FROM `teams`;";
+            string sql = $"SELECT `id`, `startDate`, `endDate`, `type`, `description` FROM `competitions`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                teams.Add(new Team
+                competitions.Add(new Competition
                 {
                     Id = reader.GetInt64(0),
-                    Title = reader.GetString(1),
-                    Number = reader.GetByte(2),
-                    Organization = reader.GetString(3),
-                    LeaderId = reader.GetInt64(4),
-                    EscortId = reader.GetInt64(5),
-                    MemberCount = reader.GetByte(6),
-                    Points = reader.GetDouble(7),
-                    CompetitionId = reader.GetInt64(8),
+                    StartDate = reader.GetDateTime(1),
+                    EndDate = reader.GetDateTime(2),
+                    Type = (CompetitionType)reader.GetInt32(3)
                 });
             }
-            return teams;
+            return competitions;
         }
 
         [HttpGet("{id}")]
@@ -51,22 +48,17 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `title`, `number`, `organization`, `leader_id`, `escort_id`, `memberCount`, `points`, `competetion_id` FROM `teams` WHERE id={id};";
+            string sql = $"SELECT `id`, `startDate`, `endDate`, `type`, `description` FROM `competitions` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return Ok(new Team
+                return Ok(new Competition
                 {
                     Id = reader.GetInt64(0),
-                    Title = reader.GetString(1),
-                    Number = reader.GetByte(2),
-                    Organization = reader.GetString(3),
-                    LeaderId = reader.GetInt64(4),
-                    EscortId = reader.GetInt64(5),
-                    MemberCount = reader.GetByte(6),
-                    Points = reader.GetDouble(7),
-                    CompetitionId = reader.GetInt64(8),
+                    StartDate = reader.GetDateTime(1),
+                    EndDate = reader.GetDateTime(2),
+                    Type = (CompetitionType)reader.GetInt32(3)
                 });
             }
             else
@@ -80,23 +72,20 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            Team team = new()
+            Competition competition = new()
             {
-                Title = body["title"],
-                Number = Convert.ToByte(body["number"]),
-                Organization = body["organization"],
-                LeaderId = Convert.ToInt64(body["leaderId"]),
-                EscortId = Convert.ToInt64(body["escortId"]),
-                MemberCount = Convert.ToByte(body["memberCount"]),
-                CompetitionId = Convert.ToInt64(body["competitionId"])
+                StartDate = Convert.ToDateTime(body["startDate"]),
+                EndDate = Convert.ToDateTime(body["endDate"]),
+                Type = (CompetitionType)Convert.ToInt32(body["type"]),
+                Description = body["description"]
             };
 
             using (MySqlConnection connection = new(Config.ConnString))
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `teams`(`title`, `number`, `organization`, `leader_id`, `escort_id`, `memberCount`, `competetion_id`) " +
-                    $"VALUES ('{team.Title}', '{team.Number}', '{Sql.Nullable(team.Organization)}', '{team.LeaderId}', '{Sql.Nullable(team.EscortId)}', '{team.MemberCount}', '{team.CompetitionId}');";
+                string sql = "INSERT INTO `competitions`(`startDate`, `endDate`, `type`, `description`) " +
+                    $"VALUES ('{competition.StartDate}', '{competition.EndDate}', '{(int)competition.Type}', {Sql.Nullable(competition.Description)});";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -119,15 +108,13 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            Team team = new()
+            Competition competition = new()
             {
                 Id = id,
-                Title = body["title"],
-                Number = Convert.ToByte(body["number"]),
-                Organization = body["organization"],
-                LeaderId = Convert.ToInt64(body["leaderId"]),
-                EscortId = Convert.ToInt64(body["escortId"]),
-                MemberCount = Convert.ToByte(body["memberCount"]),
+                StartDate = Convert.ToDateTime(body["startDate"]),
+                EndDate = Convert.ToDateTime(body["endDate"]),
+                Type = (CompetitionType)Convert.ToInt32(body["type"]),
+                Description = body["description"]
             };
 
             using MySqlConnection connection = new(Config.ConnString);
@@ -149,14 +136,14 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `teams` SET `title`='{team.Title}',`number`='{team.Number}',`organization`='{team.Organization}',`leader_id`='{team.LeaderId}',`escort_id`='{team.EscortId}',`memberCount`='{team.MemberCount}',`points`='{team.Points}',`competetion_id`='{team.CompetitionId}' WHERE id={id};";
+            sql = $"UPDATE `competitions` SET startDate`='{competition.StartDate}',`endDate`='{competition.EndDate}',`type`='{(int)competition.Type}',`description`='{Sql.Nullable(competition.Description)}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
                 return Ok();
             }
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -167,7 +154,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT * FROM `teams` WHERE id={id}";
+            sql = $"SELECT * FROM `competitions` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -181,7 +168,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"DELETE FROM `teams` WHERE id={id};";
+            sql = $"DELETE FROM `competitions` WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteReaderAsync();
