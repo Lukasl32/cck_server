@@ -40,7 +40,7 @@ namespace Api.Controllers
                     Administrator = reader.GetBoolean(5),
                     Signature = reader.GetString(6),
 
-                    LastLogin = reader.GetDateTime(7),
+                    LastLogin = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
                     Registered = reader.GetDateTime(8),
                 });
             }
@@ -133,7 +133,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT * FROM `user` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `user` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());

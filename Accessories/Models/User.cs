@@ -15,6 +15,6 @@ public class User
     public bool? Administrator { get; set; }
     public string? Signature { get; set; }
 
-    public DateTime LastLogin { get; set; }
+    public DateTime? LastLogin { get; set; }
     public DateTime Registered { get; set; }
 }

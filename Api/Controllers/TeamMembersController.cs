@@ -1,41 +1,48 @@
-﻿using Accessories.Models;
-using System.Data.Common;
+﻿using System.Data.Common;
+
+using Accessories.Enums;
+using Accessories.Models;
 
 using Microsoft.AspNetCore.Mvc;
 
 using MySqlConnector;
+using Microsoft.Extensions.Primitives;
+using Accessories.Extensions;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Api.Controllers
 {
-    [Route("api/users/escort")]
+    [Route("api/teams/members")]
     [ApiController]
-    public class UsersEscortController : ControllerBase
+    public class TeamMembersController : ControllerBase
     {
-        [HttpGet()]
-        public async Task<List<UserTeamEscort>> Get()
+        [HttpGet]
+        public async Task<List<UserTeamMember>> Get()
         {
             Security.Authorize(HttpContext);
 
-            var users = new List<UserTeamEscort>();
+            var teamMembers = new List<UserTeamMember>();
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `firstName`, `lastName`, `phoneNumber` FROM `users_escort`;";
+            string sql = $"SELECT `id`, `team_id`, `firstName`, `lastName`, `type`+0, `phone_number`, `birthdate` FROM `team_members`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                users.Add(new UserTeamEscort
+                teamMembers.Add(new UserTeamMember
                 {
                     Id = reader.GetInt64(0),
-                    FirstName = reader.GetString(1),
-                    LastName = reader.GetString(2),
-                    PhoneNumber = reader.GetString(3),
+                    TeamId = reader.GetInt64(1),
+                    FirstName = reader.GetString(2),
+                    LastName = reader.GetString(3),
+                    Type = (TeamMemberType)reader.GetInt32(4),
+                    PhoneNumber = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    Birthdate = reader.IsDBNull(6) ? null : reader.GetDateTime(6)
                 });
             }
-            return users;
+            return teamMembers;
         }
 
         [HttpGet("{id}")]
@@ -45,43 +52,49 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `firstName`, `lastName`, `phoneNumber` FROM `users_escort` WHERE id={id};";
+            string sql = $"SELECT `id`, `team_id`, `firstName`, `lastName`, `type`+0, `phone_number`, `birthdate` FROM `team_members` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return Ok(new UserTeamEscort
+                return Ok(new UserTeamMember
                 {
                     Id = reader.GetInt64(0),
-                    FirstName = reader.GetString(1),
-                    LastName = reader.GetString(2),
-                    PhoneNumber = reader.GetString(3),
+                    TeamId = reader.GetInt64(1),
+                    FirstName = reader.GetString(2),
+                    LastName = reader.GetString(3),
+                    Type = (TeamMemberType)reader.GetInt32(4),
+                    PhoneNumber = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    Birthdate = reader.IsDBNull(6) ? null : reader.GetDateTime(6)
                 });
             }
             else
                 return NotFound();
         }
 
-        [HttpPost()]   //není hotové (chce vylepšit)
+        [HttpPost]
         public async Task<IActionResult> Post()
         {
-            Security.Authorize(HttpContext); //registrace podminena prihlasenim
+            Security.Authorize(HttpContext);
 
             var body = HttpContext.Request.Form;
 
-            UserTeamEscort user = new()
+            UserTeamMember teamMember = new()
             {
-                FirstName = body["fistName"],
+                TeamId = Convert.ToInt64(body["teamId"]),
+                FirstName = body["firstName"],
                 LastName = body["lastName"],
-                PhoneNumber = body["phoneNumber"],
+                Type = (TeamMemberType)Convert.ToInt32(body["type"]),
+                PhoneNumber = body["phoneNumber"] == "" ? StringValues.Empty : body["phoneNumber"],
+                Birthdate = (body["birthdate"] == StringValues.Empty || body["birthdate"] == "NULL" || body["birthdate"] == "") ? null : Convert.ToDateTime(body["birthdate"]),
             };
 
             using (MySqlConnection connection = new(Config.ConnString))
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `users_escort`(`firstName`, `lastName`, `phoneNumber`) " +
-                    $"VALUES ('{user.FirstName}', '{user.LastName}', '{user.PhoneNumber}');";
+                string sql = "INSERT INTO `team_members`(`team_id`, `firstName`, `lastName`, `type`, `phone_number`, `birthdate`) " +
+                    $"VALUES ('{teamMember.TeamId}', '{teamMember.FirstName}', '{teamMember.LastName}', '{(int)teamMember.Type}', {Sql.Nullable(teamMember.PhoneNumber)}, {Sql.Nullable(teamMember.Birthdate)});";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -97,6 +110,7 @@ namespace Api.Controllers
             return StatusCode(201);
         }
 
+        // PUT api/<TeamMembersController>/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id)
         {
@@ -104,12 +118,14 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            UserTeamEscort newUser = new()
+            UserTeamMember teamMember = new()
             {
-                Id = id,
+                TeamId = Convert.ToInt64(body["teamId"]),
                 FirstName = body["firstName"],
                 LastName = body["lastName"],
-                PhoneNumber = body["phoneNumber"],
+                Type = (TeamMemberType)Convert.ToInt32(body["type"]),
+                PhoneNumber = body["phoneNumber"] == "" ? StringValues.Empty : body["phoneNumber"],
+                Birthdate = (body["birthdate"] == StringValues.Empty || body["birthdate"] == "NULL" || body["birthdate"] == "") ? null : Convert.ToDateTime(body["birthdate"]),
             };
 
             using MySqlConnection connection = new(Config.ConnString);
@@ -117,7 +133,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `users_escort` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `team_members` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -131,7 +147,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `users_escort` SET `firstName`='{newUser.FirstName}',`lastName`='{newUser.LastName}', `phoneNumber`='{newUser.PhoneNumber}' WHERE id={id}";
+            sql = $"UPDATE `team_members` SET `team_id`='{teamMember.TeamId}',`firstName`='{teamMember.FirstName}',`lastName`='{teamMember.LastName}',`type`='{(int)teamMember.Type}',`phone_number`={Sql.Nullable(teamMember.PhoneNumber)},`birthdate`={Sql.Nullable(teamMember.Birthdate)} WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
@@ -149,7 +165,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT * FROM `users_escort` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `team_members` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -163,7 +179,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"DELETE FROM `users_leader` WHERE id={id};";
+            sql = $"DELETE FROM `team_members` WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteReaderAsync();

@@ -1,6 +1,5 @@
 ﻿using System.Data.Common;
-
-using Accessories;
+using Accessories.Extensions;
 using Accessories.Models;
 
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +22,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `title`, `number`, `organization`, `leader_id`, `escort_id`, `memberCount`, `points`, `competetion_id` FROM `teams`;";
+            string sql = $"SELECT `id`, `number`, `organization`, `points`, `competetion_id` FROM `teams`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -31,14 +30,10 @@ namespace Api.Controllers
                 teams.Add(new Team
                 {
                     Id = reader.GetInt64(0),
-                    Title = reader.GetString(1),
-                    Number = reader.GetByte(2),
-                    Organization = reader.GetString(3),
-                    LeaderId = reader.GetInt64(4),
-                    EscortId = reader.GetInt64(5),
-                    MemberCount = reader.GetByte(6),
-                    Points = reader.GetDouble(7),
-                    CompetitionId = reader.GetInt64(8),
+                    Number = reader.GetByte(1),
+                    Organization = reader.GetString(2),
+                    Points = reader.IsDBNull(3) ? null : reader.GetDouble(3),
+                    CompetitionId = reader.GetInt64(4),
                 });
             }
             return teams;
@@ -51,7 +46,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `title`, `number`, `organization`, `leader_id`, `escort_id`, `memberCount`, `points`, `competetion_id` FROM `teams` WHERE id={id};";
+            string sql = $"SELECT `id`, `number`, `organization`, `points`, `competetion_id` FROM `teams` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
@@ -59,14 +54,10 @@ namespace Api.Controllers
                 return Ok(new Team
                 {
                     Id = reader.GetInt64(0),
-                    Title = reader.GetString(1),
-                    Number = reader.GetByte(2),
-                    Organization = reader.GetString(3),
-                    LeaderId = reader.GetInt64(4),
-                    EscortId = reader.GetInt64(5),
-                    MemberCount = reader.GetByte(6),
-                    Points = reader.GetDouble(7),
-                    CompetitionId = reader.GetInt64(8),
+                    Number = reader.GetByte(1),
+                    Organization = reader.GetString(2),
+                    Points = reader.IsDBNull(3) ? null : reader.GetDouble(3),
+                    CompetitionId = reader.GetInt64(4),
                 });
             }
             else
@@ -82,12 +73,8 @@ namespace Api.Controllers
 
             Team team = new()
             {
-                Title = body["title"],
                 Number = Convert.ToByte(body["number"]),
                 Organization = body["organization"],
-                LeaderId = Convert.ToInt64(body["leaderId"]),
-                EscortId = Convert.ToInt64(body["escortId"]),
-                MemberCount = Convert.ToByte(body["memberCount"]),
                 CompetitionId = Convert.ToInt64(body["competitionId"])
             };
 
@@ -95,8 +82,8 @@ namespace Api.Controllers
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `teams`(`title`, `number`, `organization`, `leader_id`, `escort_id`, `memberCount`, `competetion_id`) " +
-                    $"VALUES ('{team.Title}', '{team.Number}', '{Sql.Nullable(team.Organization)}', '{team.LeaderId}', '{Sql.Nullable(team.EscortId)}', '{team.MemberCount}', '{team.CompetitionId}');";
+                string sql = "INSERT INTO `teams`(`number`, `organization`, `competetion_id`) " +
+                    $"VALUES ('{team.Number}', {Sql.Nullable(team.Organization)}, '{team.CompetitionId}');";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -122,12 +109,8 @@ namespace Api.Controllers
             Team team = new()
             {
                 Id = id,
-                Title = body["title"],
                 Number = Convert.ToByte(body["number"]),
                 Organization = body["organization"],
-                LeaderId = Convert.ToInt64(body["leaderId"]),
-                EscortId = Convert.ToInt64(body["escortId"]),
-                MemberCount = Convert.ToByte(body["memberCount"]),
             };
 
             using MySqlConnection connection = new(Config.ConnString);
@@ -149,7 +132,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `teams` SET `title`='{team.Title}',`number`='{team.Number}',`organization`='{team.Organization}',`leader_id`='{team.LeaderId}',`escort_id`='{team.EscortId}',`memberCount`='{team.MemberCount}',`points`='{team.Points}',`competetion_id`='{team.CompetitionId}' WHERE id={id};";
+            sql = $"UPDATE `teams` SET `number`='{team.Number}',`organization`='{team.Organization}', `points`={Sql.Nullable(team.Points)},`competetion_id`='{team.CompetitionId}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();

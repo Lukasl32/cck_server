@@ -45,7 +45,7 @@ namespace Api.Controllers
                     UserId = id,
                     Hash = Security.GenerateHash(128),
                     Created = DateTime.Now,
-                    Expiration = TimeSpan.FromMinutes(10)
+                    Expiration = TimeSpan.FromHours(1)
                 };
                 await Security.SaveToken(token);
                 await LogLogin(id);

@@ -1,8 +1,7 @@
 ﻿using System.Data;
 using System.Data.Common;
-
-using Accessories;
 using Accessories.Enums;
+using Accessories.Extensions;
 using Accessories.Models;
 
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +11,7 @@ using MySqlConnector;
 
 namespace Api.Controllers
 {
-    [Route("api/comtetitions")]
+    [Route("api/competitions")]
     [ApiController]
     public class CompetitionController : ControllerBase
     {
@@ -25,7 +24,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `startDate`, `endDate`, `type`, `description` FROM `competitions`;";
+            string sql = $"SELECT `id`, `startDate`, `endDate`, `type`+0, `description` FROM `competitions`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -35,7 +34,8 @@ namespace Api.Controllers
                     Id = reader.GetInt64(0),
                     StartDate = reader.GetDateTime(1),
                     EndDate = reader.GetDateTime(2),
-                    Type = (CompetitionType)reader.GetInt32(3)
+                    Type = (CompetitionType)reader.GetInt32(3),
+                    Description = reader.IsDBNull(4) ? null : reader.GetString(4)
                 });
             }
             return competitions;
@@ -48,7 +48,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `startDate`, `endDate`, `type`, `description` FROM `competitions` WHERE id={id};";
+            string sql = $"SELECT `id`, `startDate`, `endDate`, `type`+0, `description` FROM `competitions` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
@@ -58,7 +58,8 @@ namespace Api.Controllers
                     Id = reader.GetInt64(0),
                     StartDate = reader.GetDateTime(1),
                     EndDate = reader.GetDateTime(2),
-                    Type = (CompetitionType)reader.GetInt32(3)
+                    Type = (CompetitionType)reader.GetInt32(3),
+                    Description = reader.IsDBNull(4) ? null : reader.GetString(4)
                 });
             }
             else
@@ -85,7 +86,7 @@ namespace Api.Controllers
                 await connection.OpenAsync();
 
                 string sql = "INSERT INTO `competitions`(`startDate`, `endDate`, `type`, `description`) " +
-                    $"VALUES ('{competition.StartDate}', '{competition.EndDate}', '{(int)competition.Type}', {Sql.Nullable(competition.Description)});";
+                    $"VALUES ('{competition.StartDate:yyyy-MM-dd}', '{competition.EndDate:yyyy-MM-dd}', '{(int)competition.Type}', {Sql.Nullable(competition.Description)});";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -122,7 +123,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `teams` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `competitions` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -136,7 +137,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `competitions` SET startDate`='{competition.StartDate}',`endDate`='{competition.EndDate}',`type`='{(int)competition.Type}',`description`='{Sql.Nullable(competition.Description)}' WHERE id={id};";
+            sql = $"UPDATE `competitions` SET `startDate`='{competition.StartDate:yyyy-MM-dd}',`endDate`='{competition.EndDate:yyyy-MM-dd}',`type`='{(int)competition.Type}',`description`={Sql.Nullable(competition.Description)} WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
@@ -154,7 +155,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT * FROM `competitions` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `competitions` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());

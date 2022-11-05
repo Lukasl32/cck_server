@@ -1,4 +1,4 @@
-﻿namespace Accessories;
+﻿namespace Accessories.Extensions;
 
 public static class Sql
 {
@@ -6,6 +6,8 @@ public static class Sql
     {
         if (value is null)
             return "NULL";
+        else if (value.GetType() == typeof(DateTime))
+            return $"'{value:yyyy-MM-dd HH:mm:ss}'";
         else
             return $"'{value}'";
     }
