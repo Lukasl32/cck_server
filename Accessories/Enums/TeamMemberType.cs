@@ -2,7 +2,7 @@
 
 public enum TeamMemberType : int
 {
-    Leader = 1,
-    Escort = 2,
-    Member = 3
+    Velitel = 1,
+    Doprovod = 2,
+    Clen = 3
 }

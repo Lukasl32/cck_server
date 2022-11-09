@@ -67,7 +67,7 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Post()
         {
-            Security.Authorize(HttpContext); //registrace podminena prihlasenim
+            Security.Authorize(HttpContext);
 
             var body = HttpContext.Request.Form;
 
