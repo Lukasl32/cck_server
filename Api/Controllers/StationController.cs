@@ -23,7 +23,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $";";
+            string sql = $"SELECT `id`, `competetion_id`, `title`, `number`, `type`+0, `tier`+0, `created` FROM `stations`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -49,7 +49,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $";";
+            string sql = $"SELECT `id`, `competetion_id`, `title`, `number`, `type`+0, `tier`+0, `created` FROM `stations` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
@@ -76,18 +76,21 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            Team team = new()
+            Station station = new()
             {
                 CompetitionId = Convert.ToInt16(body["competitionId"]),
-
+                Title = body["title"],
+                Number = Convert.ToInt32(body["number"]),
+                Type = (StationType)Convert.ToInt32(body["type"]),
+                Tier = (StationTier)Convert.ToInt32(body["tier"]),
             };
 
             using (MySqlConnection connection = new(Config.ConnString))
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `teams`(`number`, `organization`, `competetion_id`) " +
-                    $"VALUES ('{team.Number}', {Sql.Nullable(team.Organization)}, '{team.CompetitionId}');";
+                string sql = "INSERT INTO `stations`(`competetion_id`, `title`, `number`, `type`, `tier`) " +
+                    $"VALUES ('{station.CompetitionId}', '{station.Title}', '{station.Number}', '{(int)station.Type}', '{(int)station.Tier}');";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -106,13 +109,77 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id)
         {
+            Security.Authorize(HttpContext);
 
+            var body = HttpContext.Request.Form;
+
+            Station station = new()
+            {
+                Id = id,
+                CompetitionId = Convert.ToInt64(body["competitionId"]),
+                Title = body["title"],
+                Number = Convert.ToByte(body["number"]),
+                Type = (StationType)Convert.ToInt32(body["type"]),
+                Tier = (StationTier)Convert.ToInt32(body["tier"])
+            };
+
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+            string sql;
+
+            //kontrola že uživatel s ID je PRÁVĚ jeden
+            sql = $"SELECT COUNT(*) FROM `stations` WHERE id={id}";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+                if (count == 0)
+                {
+                    return NotFound();
+                }
+                else if (count > 1)
+                {
+                    return Conflict();
+                }
+            }
+
+            sql = $";";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                await command.ExecuteNonQueryAsync();
+                return Ok();
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            Security.Authorize(HttpContext);
 
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+            string sql;
+
+            //kontrola že uživatel s ID je PRÁVĚ jeden
+            sql = $"SELECT * FROM `stations` WHERE id={id}";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+                if (count == 0)
+                {
+                    return NotFound();
+                }
+                else if (count > 1)
+                {
+                    return Conflict();
+                }
+            }
+
+            sql = $"DELETE FROM `stations` WHERE id={id};";
+            using (MySqlCommand command = new(sql, connection))
+            {
+                await command.ExecuteReaderAsync();
+                return Ok();
+            }
         }
     }
 }

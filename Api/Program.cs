@@ -3,6 +3,7 @@ using Api.Middlewares;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
+using Microsoft.Extensions.Hosting.Systemd;
 
 using NuGet.Configuration;
 
