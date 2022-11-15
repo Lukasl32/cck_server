@@ -16,9 +16,9 @@ namespace Api.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Login()
         {
-            var body = HttpContext.Request.Form;
-            string? email = body["email"];
-            string? password = body["password"];
+            var header = HttpContext.Request.Headers;
+            string? email = header["email"];
+            string? password = header["password"];
 
             long id;
             string? passwordHash;
