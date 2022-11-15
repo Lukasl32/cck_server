@@ -11,6 +11,9 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//konfigurace aplikace aby komunikovala s Linux systemd
+builder.Host.UseSystemd();
+
 // Add services to the container.
 
 Config.Initialize();
