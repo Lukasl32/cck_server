@@ -142,7 +142,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $";";
+            sql = $"UPDATE `stations` SET `competetion_id`='{station.CompetitionId}',`title`='{station.Title}',`number`='{station.Number}',`type`='{(int)station.Type}',`tier`='{(int)station.Tier}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
