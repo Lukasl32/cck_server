@@ -150,7 +150,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT * FROM `teams` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `teams` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
