@@ -20,7 +20,7 @@ public class Security
     public static void Authorize(HttpContext context, bool administrator = false) => Authorize(context, out _, administrator);
     public static void Authorize(HttpContext context, out Token token, bool administrator = false)
     {
-        string tokenHash = context.Request.Headers["token"];
+        string? tokenHash = context.Request.Headers["token"];
         if (tokenHash == null)
             throw new AuthorizationException();
 
