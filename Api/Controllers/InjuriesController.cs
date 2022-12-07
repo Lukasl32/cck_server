@@ -8,38 +8,42 @@ using Microsoft.AspNetCore.Mvc;
 
 using MySqlConnector;
 
+// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
 namespace Api.Controllers
 {
-    [Route("api/stations")]
+    [Route("api/injuries")]
     [ApiController]
-    public class StationController : ControllerBase
+    public class InjuriesController : ControllerBase
     {
         [HttpGet]
-        public async Task<List<Station>> Get()
+        public async Task<List<Injurie>> Get()
         {
             Security.Authorize(HttpContext);
 
-            var stations = new List<Station>();
+            var injurie = new List<Injurie>();
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `competetion_id`, `title`, `number`, `type`+0, `tier`+0, `created` FROM `stations`;";
+            string sql = $"SELECT `id`, `station_id`, `referee_id`, `letter`, `situation`, `diagnosis`, `maximalPoints`, `necessaryEquipment`, `info` FROM `injuries`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                stations.Add(new Station
+                injurie.Add(new Injurie
                 {
                     Id = reader.GetInt64(0),
-                    CompetitionId = reader.GetInt64(1),
-                    Title = reader.GetString(2),
-                    Number = reader.GetByte(3),
-                    Type = (StationType)reader.GetInt32(4),
-                    Tier = (StationTier)reader.GetInt32(5),
-                    Created = reader.GetDateTime(6)
+                    StationId = reader.GetInt64(1),
+                    RefereeId = reader.GetInt64(2),
+                    Letter = reader.GetChar(3),
+                    Situation = reader.GetString(4),
+                    Diagnose = reader.GetString(5),
+                    MaximalPoints = reader.GetInt32(6),
+                    NeccesseryEquipment= reader.GetString(7),
+                    Info = reader.GetString(8),
                 });
             }
-            return stations;
+            return injurie;
         }
 
         [HttpGet("{id}")]
@@ -49,20 +53,22 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `competetion_id`, `title`, `number`, `type`+0, `tier`+0, `created` FROM `stations` WHERE id={id};";
+            string sql = $"SELECT `id`, `station_id`, `referee_id`, `letter`, `situation`, `diagnosis`, `maximalPoints`, `necessaryEquipment`, `info` FROM `injuries` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return Ok(new Station
+                return Ok(new Injurie
                 {
                     Id = reader.GetInt64(0),
-                    CompetitionId = reader.GetInt64(1),
-                    Title = reader.GetString(2),
-                    Number = reader.GetByte(3),
-                    Type = (StationType)reader.GetInt32(4),
-                    Tier = (StationTier)reader.GetInt32(5),
-                    Created = reader.GetDateTime(6)
+                    StationId = reader.GetInt64(1),
+                    RefereeId = reader.GetInt64(2),
+                    Letter = reader.GetChar(3),
+                    Situation = reader.GetString(4),
+                    Diagnose = reader.GetString(5),
+                    MaximalPoints = reader.GetInt32(6),
+                    NeccesseryEquipment = reader.GetString(7),
+                    Info = reader.GetString(8),
                 });
             }
             else
@@ -76,21 +82,24 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            Station station = new()
+            Injurie injurie = new()
             {
-                CompetitionId = Convert.ToInt16(body["competitionId"]),
-                Title = body["title"],
-                Number = Convert.ToInt32(body["number"]),
-                Type = (StationType)Convert.ToInt32(body["type"]),
-                Tier = (StationTier)Convert.ToInt32(body["tier"]),
+                StationId = Convert.ToInt64(body["stationId"]),
+                RefereeId = Convert.ToInt64(body["refereeId"]),
+                Letter = Convert.ToChar(body["letter"]),
+                Situation = body["situation"],
+                Diagnose = body["diagnose"],
+                MaximalPoints = Convert.ToInt32(body["maximalPoints"]),
+                NeccesseryEquipment = body["neccesseryEquipment"],
+                Info = body["info"]
             };
 
             using (MySqlConnection connection = new(Config.ConnString))
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `stations`(`competetion_id`, `title`, `number`, `type`, `tier`) " +
-                    $"VALUES ('{station.CompetitionId}', '{station.Title}', '{station.Number}', '{(int)station.Type}', '{(int)station.Tier}');";
+                string sql = "INSERT INTO `injuries`(`station_id`, `referee_id`, `letter`, `situation`, `diagnosis`, `maximalPoints`, `necessaryEquipment`, `info`) " +
+                    $"VALUES ('{injurie.StationId}', '{injurie.RefereeId}', '{injurie.Letter}', '{injurie.Situation}', '{injurie.Diagnose}', '{injurie.MaximalPoints}', {Sql.Nullable(injurie.NeccesseryEquipment)}, {Sql.Nullable(injurie.Info)});";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -113,14 +122,16 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            Station station = new()
+            Injurie injurie = new()
             {
-                Id = id,
-                CompetitionId = Convert.ToInt64(body["competitionId"]),
-                Title = body["title"],
-                Number = Convert.ToByte(body["number"]),
-                Type = (StationType)Convert.ToInt32(body["type"]),
-                Tier = (StationTier)Convert.ToInt32(body["tier"])
+                StationId = Convert.ToInt64(body["stationId"]),
+                RefereeId = Convert.ToInt64(body["refereeId"]),
+                Letter = Convert.ToChar(body["letter"]),
+                Situation = body["situation"],
+                Diagnose = body["diagnose"],
+                MaximalPoints = Convert.ToInt32(body["maximalPoints"]),
+                NeccesseryEquipment = body["neccesseryEquipment"],
+                Info = body["info"]
             };
 
             using MySqlConnection connection = new(Config.ConnString);
@@ -128,7 +139,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `stations` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `injuries` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -142,7 +153,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `stations` SET `competetion_id`='{station.CompetitionId}',`title`='{station.Title}',`number`='{station.Number}',`type`='{(int)station.Type}',`tier`='{(int)station.Tier}' WHERE id={id};";
+            sql = $"UPDATE `injuries` SET `station_id`='{injurie.StationId}',`referee_id`='{injurie.RefereeId}',`letter`='{injurie.Letter}',`situation`='{injurie.Situation}',`diagnosis`='{injurie.Diagnose}',`maximalPoints`='{injurie.MaximalPoints}',`necessaryEquipment`={Sql.Nullable(injurie.NeccesseryEquipment)},`info`={Sql.Nullable(injurie.Info)} WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
@@ -160,7 +171,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `stations` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `injuries` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -174,7 +185,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"DELETE FROM `stations` WHERE id={id};";
+            sql = $"DELETE FROM `injuries` WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteReaderAsync();
