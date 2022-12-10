@@ -92,7 +92,7 @@ namespace Api.Controllers
                 {
                     await command.ExecuteNonQueryAsync();
                 }
-                catch (DbException)
+                catch (DbException ex)
                 {
                     //DB error code: 1062 - duplicated entry
                     return Conflict();
