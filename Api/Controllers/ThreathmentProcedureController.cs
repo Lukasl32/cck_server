@@ -1,5 +1,4 @@
-﻿using Accessories.Extensions;
-using Accessories.Models;
+﻿using Accessories.Models;
 using System.Data.Common;
 
 using Microsoft.AspNetCore.Mvc;
@@ -10,33 +9,33 @@ using MySqlConnector;
 
 namespace Api.Controllers
 {
-    [Route("api/figurants")]
+    [Route("api/threathmentprocedures")]
     [ApiController]
-    public class FigurantsController : ControllerBase
+    public class ThreathmentProcedureController : ControllerBase
     {
         [HttpGet]
-        public async Task<List<Figurant>> Get()
+        public async Task<List<ThreathmentProcedure>> Get()
         {
             Security.Authorize(HttpContext);
 
-            var injurie = new List<Figurant>();
+            var threathmentProcedures = new List<ThreathmentProcedure>();
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `injurie_id`, `instructions`, `makeup` FROM `figurants`;";
+            string sql = $"SELECT `id`, `injurie_id`, `activity`, `order` FROM `threathment_procedures`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                injurie.Add(new Figurant
+                threathmentProcedures.Add(new ThreathmentProcedure
                 {
                     Id = reader.GetInt64(0),
                     InjurieId = reader.GetInt64(1),
-                    Instructions= reader.GetString(2),
-                    MakeUp=reader.GetString(3),
+                    Activity = reader.GetString(2),
+                    Order= reader.GetInt32(3),
                 });
             }
-            return injurie;
+            return threathmentProcedures;
         }
 
         [HttpGet("{id}")]
@@ -46,17 +45,17 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `injurie_id`, `instructions`, `makeup` FROM `figurants` WHERE id={id};";
+            string sql = $"SELECT `id`, `injurie_id`, `activity`, `order` FROM `threathment_procedures` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return Ok(new Figurant
+                return Ok(new ThreathmentProcedure
                 {
                     Id = reader.GetInt64(0),
                     InjurieId = reader.GetInt64(1),
-                    Instructions = reader.GetString(2),
-                    MakeUp = reader.GetString(3),
+                    Activity = reader.GetString(2),
+                    Order = reader.GetInt32(3),
                 });
             }
             else
@@ -70,19 +69,19 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            Figurant figurant = new()
+            ThreathmentProcedure threathmentProcedure = new()
             {
                 InjurieId = Convert.ToInt64(body["injurieId"]),
-                Instructions = body["instructions"],
-                MakeUp = body["makeUp"]
+                Activity = body["activity"],
+                Order = Convert.ToInt32(body["order"])
             };
 
             using (MySqlConnection connection = new(Config.ConnString))
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `figurants`(`injurie_id`, `instructions`, `makeup`) " +
-                    $"VALUES ('{figurant.InjurieId}', '{figurant.Instructions}', '{figurant.MakeUp}');";
+                string sql = "INSERT INTO `threathment_procedures`(`injurie_id`, `activity`, `order`)" +
+                    $" VALUES ('{threathmentProcedure.InjurieId}', '{threathmentProcedure.Activity}', '{threathmentProcedure.Order}');";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -105,11 +104,11 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            Figurant figurant = new()
+            ThreathmentProcedure threathmentProcedure = new()
             {
                 InjurieId = Convert.ToInt64(body["injurieId"]),
-                Instructions = body["instructions"],
-                MakeUp = body["makeUp"]
+                Activity = body["activity"],
+                Order = Convert.ToInt32(body["order"])
             };
 
             using MySqlConnection connection = new(Config.ConnString);
@@ -117,7 +116,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `injuries` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `threathment_procedures` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -131,7 +130,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `figurants` SET `injurie_id`='{figurant.InjurieId}',`instructions`={Sql.Nullable(figurant.Instructions)},`makeup`={Sql.Nullable(figurant.MakeUp)} WHERE id={id};";
+            sql = $"UPDATE `threathment_procedures` SET `injurie_id`='{threathmentProcedure.InjurieId}',`activity`='{threathmentProcedure.Activity}',`order`='{threathmentProcedure.Order}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
@@ -149,7 +148,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `figurants` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `threathment_procedures` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -163,7 +162,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"DELETE FROM `figurants` WHERE id={id};";
+            sql = $"DELETE FROM `threathment_procedures` WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteReaderAsync();
