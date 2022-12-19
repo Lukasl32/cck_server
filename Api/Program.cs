@@ -1,6 +1,7 @@
 using Api;
 using Api.Middlewares;
 
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Microsoft.Extensions.Hosting.Systemd;
@@ -32,6 +33,7 @@ var serilogLogger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(serilogLogger);
 
+//IServiceCollection General configuration
 //builder.Services.AddControllers();
 builder.Services.AddControllers(options => { options.AllowEmptyInputInBodyModelBinding = true; });
 
@@ -43,8 +45,15 @@ if (builder.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
+else if(!builder.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
-//app.UseHttpsRedirection();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 app.UseAuthorization();
 

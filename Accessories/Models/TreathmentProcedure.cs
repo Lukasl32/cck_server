@@ -1,6 +1,6 @@
 ﻿namespace Accessories.Models;
 
-public class ThreathmentProcedure
+public class TreathmentProcedure
 {
     public long Id { get; set; }
     public long InjurieId { get; set; }

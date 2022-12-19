@@ -9,25 +9,25 @@ using MySqlConnector;
 
 namespace Api.Controllers
 {
-    [Route("api/threathmentprocedures")]
+    [Route("api/treathment")]
     [ApiController]
-    public class ThreathmentProcedureController : ControllerBase
+    public class TreathmentProcedureController : ControllerBase
     {
         [HttpGet]
-        public async Task<List<ThreathmentProcedure>> Get()
+        public async Task<List<TreathmentProcedure>> Get()
         {
             Security.Authorize(HttpContext);
 
-            var threathmentProcedures = new List<ThreathmentProcedure>();
+            var threathmentProcedures = new List<TreathmentProcedure>();
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `injurie_id`, `activity`, `order` FROM `threathment_procedures`;";
+            string sql = $"SELECT `id`, `injurie_id`, `activity`, `order` FROM `treathment_procedures`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                threathmentProcedures.Add(new ThreathmentProcedure
+                threathmentProcedures.Add(new TreathmentProcedure
                 {
                     Id = reader.GetInt64(0),
                     InjurieId = reader.GetInt64(1),
@@ -45,12 +45,12 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `injurie_id`, `activity`, `order` FROM `threathment_procedures` WHERE id={id};";
+            string sql = $"SELECT `id`, `injurie_id`, `activity`, `order` FROM `treathment_procedures` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return Ok(new ThreathmentProcedure
+                return Ok(new TreathmentProcedure
                 {
                     Id = reader.GetInt64(0),
                     InjurieId = reader.GetInt64(1),
@@ -69,7 +69,7 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            ThreathmentProcedure threathmentProcedure = new()
+            TreathmentProcedure threathmentProcedure = new()
             {
                 InjurieId = Convert.ToInt64(body["injurieId"]),
                 Activity = body["activity"],
@@ -80,7 +80,7 @@ namespace Api.Controllers
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `threathment_procedures`(`injurie_id`, `activity`, `order`)" +
+                string sql = "INSERT INTO `treathment_procedures`(`injurie_id`, `activity`, `order`)" +
                     $" VALUES ('{threathmentProcedure.InjurieId}', '{threathmentProcedure.Activity}', '{threathmentProcedure.Order}');";
                 using MySqlCommand command = new(sql, connection);
                 try
@@ -104,7 +104,7 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
 
-            ThreathmentProcedure threathmentProcedure = new()
+            TreathmentProcedure threathmentProcedure = new()
             {
                 InjurieId = Convert.ToInt64(body["injurieId"]),
                 Activity = body["activity"],
@@ -116,7 +116,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `threathment_procedures` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `treathment_procedures` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -130,7 +130,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `threathment_procedures` SET `injurie_id`='{threathmentProcedure.InjurieId}',`activity`='{threathmentProcedure.Activity}',`order`='{threathmentProcedure.Order}' WHERE id={id};";
+            sql = $"UPDATE `treathment_procedures` SET `injurie_id`='{threathmentProcedure.InjurieId}',`activity`='{threathmentProcedure.Activity}',`order`='{threathmentProcedure.Order}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
@@ -148,7 +148,7 @@ namespace Api.Controllers
             string sql;
 
             //kontrola že uživatel s ID je PRÁVĚ jeden
-            sql = $"SELECT COUNT(*) FROM `threathment_procedures` WHERE id={id}";
+            sql = $"SELECT COUNT(*) FROM `treathment_procedures` WHERE id={id}";
             using (MySqlCommand command = new(sql, connection))
             {
                 var count = Convert.ToInt64(await command.ExecuteScalarAsync());
@@ -162,7 +162,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"DELETE FROM `threathment_procedures` WHERE id={id};";
+            sql = $"DELETE FROM `treathment_procedures` WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteReaderAsync();
