@@ -75,7 +75,7 @@ namespace Api.Controllers
             return Ok(results);
         }
 
-        [HttpPost]
+        [HttpPost("/single")]
         public async Task<IActionResult> Post()
         {
             Security.Authorize(HttpContext);
@@ -109,6 +109,15 @@ namespace Api.Controllers
                     return Conflict();
                 }
             }
+
+            return StatusCode(201);
+        }
+        [HttpPost]
+        public async Task<IActionResult> Post()
+        {
+            Security.Authorize(HttpContext);
+            var body = HttpContext.Request.Form;
+            string? data = body["data"];
 
             return StatusCode(201);
         }
