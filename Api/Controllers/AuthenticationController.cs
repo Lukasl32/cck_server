@@ -104,5 +104,6 @@ namespace Api.Controllers
             using MySqlCommand command = new(sql, connection);
             await command.ExecuteNonQueryAsync();
         }
+        
     }
 }
