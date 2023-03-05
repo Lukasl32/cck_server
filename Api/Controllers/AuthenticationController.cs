@@ -35,7 +35,7 @@ namespace Api.Controllers
                     passwordHash = reader.GetString(1);
                 }
                 else
-                    return Forbid();
+                    return Unauthorized();
             }
 
             if(BCrypt.Net.BCrypt.EnhancedVerify(password, passwordHash, BCrypt.Net.HashType.SHA512))
