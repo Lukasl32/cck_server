@@ -52,7 +52,7 @@ namespace Api.Controllers
                 return Ok(token);
             }
             else
-                return Forbid();
+                return Unauthorized();
         }
 
         [HttpPost("register")]
