@@ -94,7 +94,7 @@ namespace Api.Controllers
                 await connection.OpenAsync();
 
                 string sql = "INSERT INTO `team_members`(`team_id`, `firstName`, `lastName`, `type`,  `signature`, `phone_number`, `birthdate`) " +
-                    $"VALUES ('{teamMember.TeamId}', '{teamMember.FirstName}', '{teamMember.LastName}', '{(int)teamMember.Type}', {Sql.Nullable(teamMember.Type == TeamMemberType.Velitel ? Security.GenerateHash(512) : null)}, {Sql.Nullable(teamMember.PhoneNumber)}, {Sql.Nullable(teamMember.Birthdate)});";
+                    $"VALUES ('{teamMember.TeamId}', '{teamMember.FirstName}', '{teamMember.LastName}', '{(int)teamMember.Type}', {Sql.Nullable(teamMember.Type == TeamMemberType.Velitel ? Security.GenerateHash(128) : null)}, {Sql.Nullable(teamMember.PhoneNumber)}, {Sql.Nullable(teamMember.Birthdate)});";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
