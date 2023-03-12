@@ -17,6 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\InjurieResultController.cs" />
+    <Compile Remove="Controllers\InjurieTaskResultController.cs" />
     <Compile Remove="Controllers\WeatherForecastController.cs" />
     <Compile Remove="WeatherForecast.cs" />
   </ItemGroup>
