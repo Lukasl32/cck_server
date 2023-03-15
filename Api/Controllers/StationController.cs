@@ -35,7 +35,7 @@ namespace Api.Controllers
                     Title = reader.GetString(2),
                     Number = reader.GetByte(3),
                     Type = (StationType)reader.GetInt32(4),
-                    Tier = (StationTier)reader.GetInt32(5),
+                    Tier = (Tier)reader.GetInt32(5),
                     Created = reader.GetDateTime(6)
                 });
             }
@@ -61,7 +61,7 @@ namespace Api.Controllers
                     Title = reader.GetString(2),
                     Number = reader.GetByte(3),
                     Type = (StationType)reader.GetInt32(4),
-                    Tier = (StationTier)reader.GetInt32(5),
+                    Tier = (Tier)reader.GetInt32(5),
                     Created = reader.GetDateTime(6)
                 });
             }
@@ -82,7 +82,7 @@ namespace Api.Controllers
                 Title = body["title"],
                 Number = Convert.ToInt32(body["number"]),
                 Type = (StationType)Convert.ToInt32(body["type"]),
-                Tier = (StationTier)Convert.ToInt32(body["tier"]),
+                Tier = (Tier)Convert.ToInt32(body["tier"]),
             };
 
             using (MySqlConnection connection = new(Config.ConnString))
@@ -120,7 +120,7 @@ namespace Api.Controllers
                 Title = body["title"],
                 Number = Convert.ToByte(body["number"]),
                 Type = (StationType)Convert.ToInt32(body["type"]),
-                Tier = (StationTier)Convert.ToInt32(body["tier"])
+                Tier = (Tier)Convert.ToInt32(body["tier"])
             };
 
             using MySqlConnection connection = new(Config.ConnString);

@@ -1,4 +1,6 @@
 ﻿using System.Data.Common;
+
+using Accessories.Enums;
 using Accessories.Extensions;
 using Accessories.Models;
 
@@ -22,7 +24,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `number`, `organization`, `points`, `competetion_id` FROM `teams`;";
+            string sql = $"SELECT `id`, `number`, `organization`, `points`, `competetion_id`, `tier`+0 FROM `teams`;";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -34,6 +36,7 @@ namespace Api.Controllers
                     Organization = reader.GetString(2),
                     Points = reader.IsDBNull(3) ? null : reader.GetDouble(3),
                     CompetitionId = reader.GetInt64(4),
+                    Tier = (Tier)reader.GetInt32(5)
                 });
             }
             return teams;
@@ -46,7 +49,7 @@ namespace Api.Controllers
 
             using MySqlConnection connection = new(Config.ConnString);
             await connection.OpenAsync();
-            string sql = $"SELECT `id`, `number`, `organization`, `points`, `competetion_id` FROM `teams` WHERE id={id};";
+            string sql = $"SELECT `id`, `number`, `organization`, `points`, `competetion_id`, `tier`+0 FROM `teams` WHERE id={id};";
             using MySqlCommand command = new(sql, connection);
             using MySqlDataReader reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
@@ -58,6 +61,7 @@ namespace Api.Controllers
                     Organization = reader.GetString(2),
                     Points = reader.IsDBNull(3) ? null : reader.GetDouble(3),
                     CompetitionId = reader.GetInt64(4),
+                    Tier = (Tier)reader.GetInt32(5)
                 });
             }
             else
@@ -75,15 +79,16 @@ namespace Api.Controllers
             {
                 Number = Convert.ToByte(body["number"]),
                 Organization = body["organization"],
-                CompetitionId = Convert.ToInt64(body["competitionId"])
+                CompetitionId = Convert.ToInt64(body["competitionId"]),
+                Tier = (Tier)Convert.ToInt32(body["tier"])
             };
 
             using (MySqlConnection connection = new(Config.ConnString))
             {
                 await connection.OpenAsync();
 
-                string sql = "INSERT INTO `teams`(`number`, `organization`, `competetion_id`) " +
-                    $"VALUES ('{team.Number}', {Sql.Nullable(team.Organization)}, '{team.CompetitionId}');";
+                string sql = "INSERT INTO `teams`(`number`, `organization`, `competetion_id`, `tier`) " +
+                    $"VALUES ('{team.Number}', {Sql.Nullable(team.Organization)}, '{team.CompetitionId}','{team.Tier}');";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -111,6 +116,7 @@ namespace Api.Controllers
                 Id = id,
                 Number = Convert.ToByte(body["number"]),
                 Organization = body["organization"],
+                Tier = (Tier)Convert.ToInt32(body["tier"])
             };
 
             using MySqlConnection connection = new(Config.ConnString);
@@ -132,7 +138,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `teams` SET `number`='{team.Number}',`organization`='{team.Organization}', `points`={Sql.Nullable(team.Points)},`competetion_id`='{team.CompetitionId}' WHERE id={id};";
+            sql = $"UPDATE `teams` SET `number`='{team.Number}',`organization`='{team.Organization}', `points`={Sql.Nullable(team.Points)},`competetion_id`='{team.CompetitionId}','tier'='{team.Tier}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();

@@ -17,24 +17,87 @@ namespace Api.Controllers
     [ApiController]
     public class ResultController : ControllerBase
     {
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> Get(int id)
-        //{
-        //    Security.Authorize(HttpContext);
-        //    using MySqlConnection connection = new(Config.ConnString);
-        //    await connection.OpenAsync();
+        [HttpGet("finalStandings/")]
+        public async Task<List<TeamResult>> GetFinalStandings(int id)
+        {
+            Security.Authorize(HttpContext);
 
+            var header = HttpContext.Request.Headers;
 
-        //    string sql = $";";
-        //    using MySqlCommand command = new(sql, connection);
-        //    using MySqlDataReader reader = await command.ExecuteReaderAsync();
-        //    if (await reader.ReadAsync())
-        //    {
-                
-        //    }
-        //    else
-        //        return NotFound();
-        //}
+            int competitionId = Convert.ToInt32(header["competitionId"]);
+            Tier tier = (Tier)Convert.ToInt32(header["tier"]);
+
+            List<TeamResult> result = new();
+
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+
+            var teams = new List<Team>();
+
+            string sql = $"SELECT `id`, `number`, `organization`, `points`, `competetion_id`, `tier`+0 FROM `teams`;";
+            using MySqlCommand command = new(sql, connection);
+            using MySqlDataReader reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                teams.Add(new Team
+                {
+                    Id = reader.GetInt64(0),
+                    Number = reader.GetByte(1),
+                    Organization = reader.GetString(2),
+                    Points = reader.IsDBNull(3) ? null : reader.GetDouble(3),
+                    CompetitionId = reader.GetInt64(4),
+                    Tier = (Tier)reader.GetInt32(5)
+                });
+            }
+
+            var toDelete = teams.ToList().FindAll(x => x.CompetitionId != id || x.Tier != tier);
+            foreach (var item in toDelete)
+                teams.Remove(item);
+
+            foreach (var team in teams)
+            {
+                var tid = team.Id;
+                sql = $"SELECT SUM(result_tasks.deducted_points) from result_tasks INNER JOIN result_injuries ON result_injuries.id=result_tasks.result_injurie_id WHERE result_injuries.team_id={tid};";
+                using MySqlCommand command2 = new(sql, connection);
+                int points = 0;
+                try
+                {
+                    points = (int)await command2.ExecuteScalarAsync();
+                }
+                catch (Exception)
+                { }
+                result.Add(new()
+                {
+                    Points = points,
+                    Number = team.Number,
+                    TeamId = tid
+                });
+            }
+            return (from entry in result orderby entry.Points descending select entry).ToList();
+        }
+
+        [HttpGet("team/{id}")]
+        public async Task<dynamic> GetTeamPoints(int id)
+        {
+            Security.Authorize(HttpContext);
+
+            using MySqlConnection connection = new(Config.ConnString);
+            await connection.OpenAsync();
+
+            string sql = $"SELECT SUM(result_tasks.deducted_points) from result_tasks INNER JOIN result_injuries ON result_injuries.id=result_tasks.result_injurie_id WHERE result_injuries.team_id={id};";
+            using MySqlCommand command2 = new(sql, connection);
+            int points = 0;
+            try
+            {
+                points = Convert.ToInt32(await command2.ExecuteScalarAsync());
+            }
+            catch (Exception)
+            { }
+            return new
+            {
+                Points = points
+            };
+        }
 
         [HttpPost]
         public async Task<IActionResult> Post()
@@ -69,10 +132,10 @@ namespace Api.Controllers
             };
             string json = JsonSerializer.Serialize(result);
             //----------------------------------------------
-            //GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
+            GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             //----------------------------------------------------------------------------------------------
 
-            GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(body["data"]!, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
+            //GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(body["data"]!, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             
             using (MySqlConnection connection = new(Config.ConnString))
             {

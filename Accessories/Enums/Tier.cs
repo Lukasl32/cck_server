@@ -1,6 +1,6 @@
 ﻿namespace Accessories.Enums;
 
-public enum StationTier : int
+public enum Tier : int
 {
     Unknown = 1,
     PrvniStupen = 2,

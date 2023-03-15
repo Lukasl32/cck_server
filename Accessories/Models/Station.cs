@@ -9,6 +9,6 @@ public class Station
     public string? Title { get; set; }
     public int Number { get; set; }
     public StationType Type { get; set; }
-    public StationTier Tier { get; set; }
+    public Tier Tier { get; set; }
     public DateTime? Created { get; set; }
 }
