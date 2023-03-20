@@ -88,7 +88,7 @@ namespace Api.Controllers
                 await connection.OpenAsync();
 
                 string sql = "INSERT INTO `teams`(`number`, `organization`, `competetion_id`, `tier`) " +
-                    $"VALUES ('{team.Number}', {Sql.Nullable(team.Organization)}, '{team.CompetitionId}','{team.Tier}');";
+                    $"VALUES ('{team.Number}', {Sql.Nullable(team.Organization)}, '{team.CompetitionId}','{(int)team.Tier}');";
                 using MySqlCommand command = new(sql, connection);
                 try
                 {
@@ -138,7 +138,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `teams` SET `number`='{team.Number}',`organization`='{team.Organization}', `points`={Sql.Nullable(team.Points)},`competetion_id`='{team.CompetitionId}','tier'='{team.Tier}' WHERE id={id};";
+            sql = $"UPDATE `teams` SET `number`='{team.Number}',`organization`='{team.Organization}', `points`={Sql.Nullable(team.Points)},`competetion_id`='{team.CompetitionId}','tier'='{(int)team.Tier}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
