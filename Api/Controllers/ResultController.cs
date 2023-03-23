@@ -107,6 +107,7 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
             
+            //GENEROVÁNÍ TESTOVACÍ SADY DAT
             //----------------------------------------------------------------------------------------------
             List<ResultTask> resultTasks = new();
             for (int i = 0; i < 10; i++)
@@ -137,7 +138,7 @@ namespace Api.Controllers
             //GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             //----------------------------------------------------------------------------------------------
 
-            //Pro provozní nasazení
+            //Pro provozní nasazení (používá kódování Base64)
             GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(Encoding.UTF8.GetString(Convert.FromBase64String(body["data"]!)), new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             
             using (MySqlConnection connection = new(Config.ConnString))
