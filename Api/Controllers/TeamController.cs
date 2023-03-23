@@ -116,7 +116,8 @@ namespace Api.Controllers
                 Id = id,
                 Number = Convert.ToByte(body["number"]),
                 Organization = body["organization"],
-                Tier = (Tier)Convert.ToInt32(body["tier"])
+                Tier = (Tier)Convert.ToInt32(body["tier"]),
+                CompetitionId = Convert.ToInt64(body["competitionId"])
             };
 
             using MySqlConnection connection = new(Config.ConnString);
@@ -138,7 +139,7 @@ namespace Api.Controllers
                 }
             }
 
-            sql = $"UPDATE `teams` SET `number`='{team.Number}',`organization`='{team.Organization}', `points`={Sql.Nullable(team.Points)},`competetion_id`='{team.CompetitionId}','tier'='{(int)team.Tier}' WHERE id={id};";
+            sql = $"UPDATE `teams` SET `number`='{team.Number}',`organization`='{team.Organization}', `points`={Sql.Nullable(team.Points)},`competetion_id`='{team.CompetitionId}',`tier`='{(int)team.Tier}' WHERE id={id};";
             using (MySqlCommand command = new(sql, connection))
             {
                 await command.ExecuteNonQueryAsync();
