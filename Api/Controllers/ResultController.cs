@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using System.Text;
 using System.Text.Json;
 
 using Accessories.Enums;
@@ -132,10 +133,12 @@ namespace Api.Controllers
             };
             string json = JsonSerializer.Serialize(result);
             //----------------------------------------------
-            GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
+            //Pro testování
+            //GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             //----------------------------------------------------------------------------------------------
 
-            //GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(body["data"]!, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
+            //Pro provozní nasazení
+            GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(Encoding.UTF8.GetString(Convert.FromBase64String(body["data"]!)), new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             
             using (MySqlConnection connection = new(Config.ConnString))
             {
