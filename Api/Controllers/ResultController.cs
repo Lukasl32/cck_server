@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using System.Text;
 using System.Text.Json;
 
 using Accessories.Enums;
@@ -106,6 +107,7 @@ namespace Api.Controllers
 
             var body = HttpContext.Request.Form;
             
+            //GENEROVÁNÍ TESTOVACÍ SADY DAT
             //----------------------------------------------------------------------------------------------
             List<ResultTask> resultTasks = new();
             for (int i = 0; i < 10; i++)
@@ -132,10 +134,12 @@ namespace Api.Controllers
             };
             string json = JsonSerializer.Serialize(result);
             //----------------------------------------------
-            GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
+            //Pro testování
+            //GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             //----------------------------------------------------------------------------------------------
 
-            //GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(body["data"]!, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
+            //Pro provozní nasazení (používá kódování Base64)
+            GeneralResult data = JsonSerializer.Deserialize<GeneralResult>(Encoding.UTF8.GetString(Convert.FromBase64String(body["data"]!)), new JsonSerializerOptions() { PropertyNameCaseInsensitive = true})!;
             
             using (MySqlConnection connection = new(Config.ConnString))
             {
