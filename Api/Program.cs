@@ -61,4 +61,4 @@ app.MapControllers();
 
 app.UseMiddleware<AuthorizationMiddleware>();
 
-app.Run("https://localhost:7041/");
+app.Run("https://0.0.0.0:7041/");
